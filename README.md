@@ -1,8 +1,10 @@
 # nfl-researchR
 
-Analysis using NFL data from nflscrapR pR/nflfastR
+Analysis using NFL data from nflscrapR/nflfastR
 
 Started on 2020-05-07.
+
+Project template created from: https://github.com/lazappi/cookiecutter-r-analysis
 
 ## Directory structure
 
@@ -14,19 +16,4 @@ Started on 2020-05-07.
 
 ## Data
 
-Input data files include:
-
-## Analysis
-
-Current analysis files include:
-
-* **template.Rmd** - Analysis template
-
-## Code
-
-Current code files include:
-
-## Output
-
-Output files (not in repository but created by analysis files):
-
+Data sourced from Lee Sharpe's nflfastR repository: https://github.com/leesharpe/nfldata/blob/master/UPDATING-NFLFASTR.md

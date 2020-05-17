@@ -8,13 +8,8 @@
 # RStudio files
 .Rproj.user/
 
-# Rendered reports
-analysis/*.html
-analysis/*.docx
-analysis/*.pdf
-docs/*.html
-docs/*.docx
-docs/*.pdf
+# Data files
+data/
 
 # output files
 output/

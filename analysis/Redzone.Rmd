@@ -1,0 +1,110 @@
+---
+title: "Analysis on whether the red zone is an arbitrary field marker"
+output: pdf_document
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../docs/")
+ })
+---
+
+are penalties drive killers?
+
+### Intro
+Historically, the red zone is at the 20 yard marker, but are teams dramatically more likely to score there? Do defenses tighten up in the red zone? How does playcalling differ?
+
+
+```{r, include = FALSE}
+# Clear environment
+rm(list = ls())
+
+set.seed(2020)
+
+# Import helper functions from transformatons.R
+source(file = "../R/plays.R")
+source(file = "../R/transformations.R")
+
+options(warn=-1)
+
+```
+
+Note: Data sourced from Lee Sharpe's nflfastR repository: https://github.com/leesharpe/nfldata/blob/master/UPDATING-NFLFASTR.md
+
+
+```{r}
+# The following transformations select the relevant columns for analysis as well 
+filtered_pbp <-
+  pbp %>%
+    filter(!is.na(ep)) %>%
+    filter(yardline_100 < 100) %>%
+    filter(!is.na(down)) %>%
+    mutate(down = as.factor(down)) %>%
+    select(season, game_id, play_id, down, time, half_seconds_remaining, play_type, pass, 
+           rush, ep, success, epa, series_success, yardline_100)
+
+pbp_standard <- 
+    filtered_pbp %>% 
+        filter(half_seconds_remaining > 120)
+       
+pbp_under2 <- 
+    filtered_pbp %>% 
+        filter(half_seconds_remaining <= 120)
+```
+
+
+### Question 1: Are teams more likely to score within the red zone compared to other places on the field?
+
+The following charts display expected points (https://www.advancedfootballanalytics.com/index.php/home/stats/stats-explained/glossary) from @nflscrapR by field position. The first charts show the full data, while the second show a zoomed in version between the 0 and 30 yard line.
+
+```{r, echo = FALSE}
+library(patchwork)
+ydl_20 <- geom_vline(xintercept = 20, linetype = "longdash")
+
+all_epydl <- ggplot(pbp_standard, aes(yardline_100, ep)) + geom_smooth(se = TRUE, level = .8) + ydl_20
+
+all_ep_down_ydl <- ggplot(pbp_standard, aes(yardline_100, ep, color=down)) + geom_smooth(se = TRUE, level = .8) + ydl_20
+all_epydl + ggtitle("EP by yardline", subtitle = "All plays outside of 2 min. warning") + 
+  all_ep_down_ydl + ggtitle("EP by yardline, by down", subtitle = "All plays outside of 2 min. warning")
+```
+
+```{r, echo = FALSE}
+all_epydl + ggtitle("EP by yardline (zoomed)", subtitle = "All plays outside of 2 min. warning") + coord_cartesian(xlim = c(0, 30), ylim = c(3, 6)) + all_ep_down_ydl + ggtitle("EP by yardline, by down (zoomed)", subtitle = "All plays outside of 2 min. warning") + coord_cartesian(xlim = c(0, 30), ylim = c(1.5, 6.5))
+
+```
+
+*Conclusion*: Based on the graph, between the 100 yard line and the 25 yard line, expected points increases fairly linearly. Between 15 and 25, it flattens a bit and rises again past the ~15 yard line.
+
+### Question 2: Does playcalling change when teams enter the redzone?
+```{r}
+# The following transformations find the pass rate and run rate for each spot on the field
+pass_rates <- pbp_standard %>% 
+  group_by(yardline_100) %>% 
+  summarise(rate = mean(pass, na.rm = TRUE), rate_type = "pass")
+rush_rates <- pbp_standard %>% 
+  group_by(yardline_100) %>% 
+  summarise(rate = mean(rush, na.rm = TRUE), rate_type = "rush")
+rates <- rbind(pass_rates, rush_rates)
+rates$rate_type = as.factor(rates$rate_type)
+```
+
+```{r, echo = FALSE}
+library(patchwork)
+
+ggplot(rates, aes(yardline_100, rate, color = rate_type)) +
+  geom_smooth() +
+  ydl_20 +
+  scale_x_continuous(breaks = seq(0, 100, by = 10))
+```
+
+*Conclusion*: Rushing is favored closer to the goal line while passing is favored on other parts of the field. No significant changes occur near the 20 yard line.
+
+
+### Question 3: Do defenses clamp down in the red zone?
+```{r, echo = FALSE}
+
+ggplot(pbp_standard, aes(yardline_100, success)) + 
+  geom_smooth() + 
+  ydl_20 + 
+  scale_x_continuous(breaks = seq(0, 100, by = 10))
+```
+Success is defined by plays that have a positive EPA.
+
+*Conclusion*: The graph shows that in the middle of the field, success rate gradually drops until around the 15 yardline, at which point is skyrockets up. This may indicate that once offenses reach the 15 yard line, they become significantly more likely to score. 
