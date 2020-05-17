@@ -11,6 +11,15 @@
 # Data files
 data/
 
+# Rendered reports
+analysis/*.Rmd
+analysis/*.html
+analysis/*.docx
+analysis/*.pdf
+docs/*.html
+docs/*.docx
+docs/*.pdf
+
 # output files
 output/
 
@@ -24,3 +33,5 @@ output/
 
 # RStudio
 .Rproj.user
+
+.DS_Store
