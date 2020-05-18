@@ -2,7 +2,11 @@
 title: "Drive Killers and Unforced Errors"
 author: "Brent Satterwhite"
 date: "5/10/2020"
-output: pdf_document
+output: 
+    html_document:
+        toc: true
+        toc_float: true
+        code_folding: hide
 knit: (function(inputFile, encoding) {
     rmarkdown::render(inputFile, encoding = encoding, output_dir = "../docs/")
  })
@@ -48,7 +52,6 @@ drives <-
                               if_else(drive_how_ended == "Field_Goal", 3, 0))) %>%
     group_by(game_id, drive) %>%
     summarise(
-        #success = max(drive_score) / 7,
         points = max(drive_score),
         committed_pens = sum(penalty_committed),
         awarded_pens = sum(penalty_awarded),
@@ -65,7 +68,7 @@ head(drives)
 
 
 Histograms for each column show that on a typical drive, no penalties are committed by either team:
-```{r, echo = FALSE}
+```{r}
 
 drives %>%
   gather() %>%                             # Convert to key-value pairs
@@ -75,14 +78,14 @@ drives %>%
 ```
 
 One concern for looking at the data at a drive level, is that the longer a drive goes on, the more likely it is that penalties will occur. So this could artificially increase the number of drives where the offense scored despite committing one or more penalties. Using `ggcorr()`,  we can create a correlation grid to show how correlated the different factors are that we're dealing with. 
-```{r, echo=FALSE}
+```{r}
 ggcorr(drives, method = c("everything", "pearson"), size = 2, label = TRUE) 
 
 ```
 
 
 Finally, we can distill this data into points per drive for each number of net penalties. 
-```{r, echo=FALSE}
+```{r}
 summary_table <- 
     drives %>%
     group_by(net_penalties) %>%
@@ -94,7 +97,7 @@ summary_table <-
 ```
 
 
-```{r, echo = FALSE}
+```{r}
 
 ggplot(summary_table, aes(x=net_penalties, y=points_per_drive, label = points_per_drive)) +
   geom_segment(aes(x=net_penalties, xend=net_penalties, y=0, yend=points_per_drive), color="grey") +
@@ -124,7 +127,7 @@ When looking at a drive-by-drive basis, defensive penalties represent a huge adv
 To mitigate this effect, I'll look at the data in a very similar way but at a series level instead of a drive level. 
 See https://github.com/leesharpe/nfldata/blob/master/UPDATING-NFLFASTR.md#add-in-columns-for-series-data for definition of series and series success
 
-```{r, include = FALSE}
+```{r}
 series <-
     pbp_with_penalties %>%
     group_by(game_id, series) %>%
@@ -146,7 +149,7 @@ series_summary <-
     filter(plays >= 50)
 ```
 
-```{r, echo = FALSE}
+```{r}
 ggplot(series_summary, aes(x=net_penalties, y=series_success_rate, label = series_success_rate)) +
   geom_segment( aes(x=net_penalties, xend=net_penalties, y=0, yend=series_success_rate), color="grey") +
   geom_point(color="maroon", size=12) +
@@ -173,9 +176,7 @@ With a `0.708` success rate as the baseline, an offense clearly has an advantage
 In this section, I want to look at how costly mistakes can be for the offense or defense. I'm filtering down to presnap penalties because those are typically self-inflicted mistakes that could have been avoided. 
 
 The table below shows the frequency of each pre-snap penalty occurring and the following chart shows how costly a pre-snap penalty is per play for offensive compared to defense.I've added a column called `epl` for expected points lost, which simply negates the EPA for offensive penalties, since EPA is built from an offensive point of view.
-```{r, echo = FALSE}
-
-
+```{r}
 presnap_penalties <- c("Delay of Game", "Offensive Offside", "False Start",  "Illegal Substitution", "Defensive Offside", "Encroachment", "Defensive Delay of Game", "Illegal Formation", "Neutral Zone Infraction", "Illegal Shift", "Illegal Motion", "Defensive Too Many Men on Field", "Offensive Too Many Men on Field")
 
 presnap_penalty_df <- 
@@ -200,7 +201,7 @@ presnap_penalty_df %>%
     kable() %>% kable_styling()
 ```
 
-```{r, echo = FALSE}
+```{r}
 summary_stats <-
     presnap_penalty_df %>%
         group_by(penalty_side) %>%
